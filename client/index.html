@@ -1,7 +1,417 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>🎲 dice roller API</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🎲 Dice Roller Application</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        color: white;
+      }
+
+      .container {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 30px;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 10px;
+        font-size: 2.5em;
+      }
+
+      .subtitle {
+        text-align: center;
+        opacity: 0.9;
+        margin-bottom: 30px;
+      }
+
+      .controls {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+      }
+
+      button {
+        background: #ff6b6b;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.3s;
+        font-weight: bold;
+      }
+
+      button:hover:not(:disabled) {
+        background: #ff5252;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      button:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+        opacity: 0.6;
+        transform: none;
+      }
+
+      .dice-container {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 30px 0;
+        flex-wrap: wrap;
+        min-height: 80px;
+      }
+
+      .die {
+        width: 70px;
+        height: 70px;
+        background: white;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        font-weight: bold;
+        color: #333;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
+      }
+
+      .die.rolling {
+        animation: roll 0.5s ease-in-out;
+      }
+
+      @keyframes roll {
+        0% {
+          transform: rotate(0deg) scale(1);
+        }
+        50% {
+          transform: rotate(180deg) scale(1.1);
+        }
+        100% {
+          transform: rotate(360deg) scale(1);
+        }
+      }
+
+      .results {
+        margin-top: 20px;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .status {
+        padding: 12px;
+        margin: 15px 0;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: bold;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .status.success {
+        background: rgba(46, 204, 113, 0.3);
+        color: #2ecc71;
+      }
+
+      .status.error {
+        background: rgba(231, 76, 60, 0.3);
+        color: #e74c3c;
+      }
+
+      .status.info {
+        background: rgba(52, 152, 219, 0.3);
+        color: #3498db;
+      }
+
+      .result-item {
+        margin: 10px 0;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 5px;
+      }
+
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top: 3px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 10px;
+        vertical-align: middle;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .api-info {
+        margin-top: 25px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        font-size: 14px;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+    </style>
   </head>
-  <body></body>
+  <body>
+    <div class="container">
+      <h1>🎲 Azure Dice Roller</h1>
+      <p class="subtitle">Powered by Azure App Service RESTful APIs</p>
+
+      <div class="controls">
+        <button onclick="wakeUpServer()" id="wakeupBtn">
+          <span id="wakeupText">Wake Up Server</span>
+        </button>
+        <button onclick="rollDice()" id="rollBtn">
+          <span id="rollText">Roll Single Die</span>
+        </button>
+        <button onclick="rollMultipleDice(3)" id="multi3Btn">
+          <span id="multi3Text">Roll 3 Dice</span>
+        </button>
+        <button onclick="rollMultipleDice(5)" id="multi5Btn">
+          <span id="multi5Text">Roll 5 Dice</span>
+        </button>
+      </div>
+
+      <div id="status"></div>
+
+      <div class="dice-container" id="diceContainer">
+        <!-- Dice will appear here -->
+      </div>
+
+      <div class="results">
+        <h3>📊 Results:</h3>
+        <div id="results">
+          <div class="result-item">Roll dice to see results here...</div>
+        </div>
+      </div>
+
+      <div class="api-info">
+        <p>
+          🔄 This client calls remote RESTful APIs hosted on Azure App Service
+        </p>
+        <p>🔗 Backend API: <span id="apiUrl">Loading...</span></p>
+        <p>⚠️ CORS is properly configured for cross-origin requests</p>
+      </div>
+    </div>
+
+    <script>
+      // Update this to your actual backend URL when deployed
+      const API_BASE = window.location.origin;
+      let currentRolls = [];
+
+      // Display API URL
+      document.getElementById("apiUrl").textContent = API_BASE;
+
+      function setButtonLoading(buttonId, isLoading, defaultText) {
+        const button = document.getElementById(buttonId);
+        const textElement = document.getElementById(
+          buttonId.replace("Btn", "Text")
+        );
+
+        if (isLoading) {
+          button.disabled = true;
+          textElement.innerHTML = `<span class="loading"></span> Loading...`;
+        } else {
+          button.disabled = false;
+          textElement.textContent = defaultText;
+        }
+      }
+
+      function showStatus(message, type = "info") {
+        const statusDiv = document.getElementById("status");
+        statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+
+        // Auto-clear info messages after 3 seconds
+        if (type === "info") {
+          setTimeout(() => {
+            if (statusDiv.innerHTML.includes(message)) {
+              statusDiv.innerHTML = "";
+            }
+          }, 3000);
+        }
+      }
+
+      function animateDiceRoll(container, results) {
+        container.innerHTML = "";
+
+        // Create rolling animation
+        results.forEach((result, index) => {
+          const die = document.createElement("div");
+          die.className = "die rolling";
+          die.textContent = "?";
+          container.appendChild(die);
+
+          // Stagger the reveal
+          setTimeout(() => {
+            die.textContent = result;
+            die.classList.remove("rolling");
+          }, 500 + index * 100);
+        });
+      }
+
+      function displayResults(message, data) {
+        const resultsDiv = document.getElementById("results");
+        resultsDiv.innerHTML = `
+                <div class="result-item">
+                    <strong>${message}</strong>
+                </div>
+                <div class="result-item">
+                    <strong>API Response:</strong><br>
+                    <pre style="color: white; margin-top: 8px;">${JSON.stringify(
+                      data,
+                      null,
+                      2
+                    )}</pre>
+                </div>
+            `;
+      }
+
+      async function wakeUpServer() {
+        setButtonLoading("wakeupBtn", true, "Wake Up Server");
+        showStatus("Waking up server...", "info");
+
+        try {
+          const response = await fetch(`${API_BASE}/api/wakeup`);
+          if (!response.ok) {
+            throw new Error(`Server responded with status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          showStatus("✅ Server is awake and ready!", "success");
+          console.log("Wake up response:", data);
+        } catch (error) {
+          showStatus(`❌ Failed to wake up server: ${error.message}`, "error");
+          console.error("Wake up error:", error);
+        } finally {
+          setButtonLoading("wakeupBtn", false, "Wake Up Server");
+        }
+      }
+
+      async function rollDice() {
+        setButtonLoading("rollBtn", true, "Roll Single Die");
+        showStatus("Rolling dice...", "info");
+
+        try {
+          const response = await fetch(`${API_BASE}/api/roll/single`);
+          if (!response.ok) {
+            throw new Error(`API responded with status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          animateDiceRoll(document.getElementById("diceContainer"), [
+            data.result,
+          ]);
+          displayResults(`🎲 Rolled: ${data.result}`, data);
+          showStatus("✅ Dice rolled successfully!", "success");
+
+          currentRolls = [data.result];
+        } catch (error) {
+          showStatus(`❌ Failed to roll dice: ${error.message}`, "error");
+          console.error("Roll error:", error);
+        } finally {
+          setButtonLoading("rollBtn", false, "Roll Single Die");
+        }
+      }
+
+      async function rollMultipleDice(count) {
+        const buttonId = `multi${count}Btn`;
+        setButtonLoading(buttonId, true, `Roll ${count} Dice`);
+        showStatus(`Rolling ${count} dice...`, "info");
+
+        try {
+          const response = await fetch(
+            `${API_BASE}/api/roll/multiple/${count}`
+          );
+          if (!response.ok) {
+            throw new Error(`API responded with status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          animateDiceRoll(
+            document.getElementById("diceContainer"),
+            data.results
+          );
+          displayResults(
+            `🎲 Rolled: ${data.results.join(", ")} | Total: ${data.total}`,
+            data
+          );
+          showStatus(`✅ ${count} dice rolled successfully!`, "success");
+
+          currentRolls = data.results;
+        } catch (error) {
+          showStatus(`❌ Failed to roll dice: ${error.message}`, "error");
+          console.error("Roll error:", error);
+        } finally {
+          setButtonLoading(buttonId, false, `Roll ${count} Dice`);
+        }
+      }
+
+      // Auto-wake server on page load
+      window.addEventListener("load", () => {
+        showStatus("🔄 Initializing Dice Roller...", "info");
+        setTimeout(() => wakeUpServer(), 1000);
+      });
+
+      // Add keyboard shortcuts
+      document.addEventListener("keydown", (event) => {
+        if (
+          event.target.tagName === "INPUT" ||
+          event.target.tagName === "TEXTAREA"
+        )
+          return;
+
+        switch (event.key) {
+          case "1":
+            rollDice();
+            break;
+          case "2":
+            rollMultipleDice(3);
+            break;
+          case "3":
+            rollMultipleDice(5);
+            break;
+          case " ":
+            event.preventDefault();
+            if (currentRolls.length === 1) rollDice();
+            else if (currentRolls.length > 0)
+              rollMultipleDice(currentRolls.length);
+            else rollDice();
+            break;
+        }
+      });
+    </script>
+  </body>
 </html>

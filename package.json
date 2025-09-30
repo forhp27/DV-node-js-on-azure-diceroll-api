@@ -1,14 +1,18 @@
 {
-    "name": "app-service-hello-world",
-    "description": "Simple Hello World Node.js sample for Azure App Service",
-    "version": "0.0.1",
+    "name": "dice-roller-api",
+    "description": "Dice Roller RESTful APIs for Azure App Service",
+    "version": "1.0.0",
     "private": true,
     "license": "MIT",
-    "author": "Microsoft",
+    "author": "Your Name",
     "scripts": {
-        "start": "node index.js"
+        "start": "node index.js",
+        "dev": "node index.js"
     },
     "dependencies": {
         "express": "^4.21.2"
+    },
+    "engines": {
+        "node": ">=14.0.0"
     }
 }
